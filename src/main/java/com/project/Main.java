@@ -12,11 +12,13 @@ import java.util.List;
 
 public class Main {
 
+    private static final String OUTPUT_PATH = "src/main/resources/generated/";
+
     public static void main(String[] args) throws IOException {
         CsvParser parser = new CsvParser("src/main/resources/invoices.csv");
         List<InvoiceLine> records = parser.parse();
         Files.createDirectories(Path.of("src/main/resources/generated"));
         IWriter writer = WriterFactory.createWriter();
-        writer.write(records, parser.getHeaders());
+        writer.write(records, parser.getHeaders(), OUTPUT_PATH);
     }
 }

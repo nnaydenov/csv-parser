@@ -8,21 +8,24 @@ import org.w3c.dom.Element;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.*;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-import java.io.*;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class XmlWriter implements IWriter {
 
-    public static final String OUTPUT_PATH = "src/main/resources/generated/output.xml";
-
     private Document document;
 
     @Override
-    public void write(List<InvoiceLine> input, String headers) {
+    public void write(List<InvoiceLine> input, String headers, String destination) {
 
         DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
         DocumentBuilder documentBuilder;
@@ -56,10 +59,10 @@ public class XmlWriter implements IWriter {
                     addNode(invoiceNode, headersIterator.next(), line.getSupplier());
                 }
             }
-            try (FileOutputStream outputStream = new FileOutputStream(OUTPUT_PATH)) {
+            try (FileOutputStream outputStream = new FileOutputStream(destination + "output.xml")) {
                 writeXmlFile(outputStream);
             }
-            extractImages(input);
+            extractImages(input, destination);
         } catch (ParserConfigurationException | TransformerException | IOException e) {
             throw new RuntimeException(e);
         }
@@ -76,10 +79,10 @@ public class XmlWriter implements IWriter {
         transformer.transform(source, result);
     }
 
-    private void extractImages(List<InvoiceLine> invoiceLines) {
+    private void extractImages(List<InvoiceLine> invoiceLines, String destination) {
         for (InvoiceLine line : invoiceLines) {
             if (line.getInvoiceImage() != null && !line.getInvoiceImage().isBlank()) {
-                ImageDecoder.decode(line.getInvoiceImage(), line.getImageName());
+                ImageDecoder.decode(line.getInvoiceImage(), destination, line.getImageName());
             }
         }
     }
@@ -91,7 +94,6 @@ public class XmlWriter implements IWriter {
 
     private void addNode(Element parent, String nodeName, String nodeValue) {
         Element newElement = document.createElement(nodeName);
-        document.normalizeDocument();
         newElement.setTextContent(nodeValue);
         parent.appendChild(newElement);
     }
